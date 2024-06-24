@@ -1,234 +1,162 @@
-# student-list project
+# PROJET FINAL DEVOPS. 
 
-Please find the specifications by clicking [here](https://github.com/diranetafen/student-list.git "here")
+## **1) Introduction**
 
-!["Crédit image : eazytraining.fr"](https://eazytraining.fr/wp-content/uploads/2020/04/pozos-logo.png) ![project](https://user-images.githubusercontent.com/18481009/84582395-ba230b00-adeb-11ea-9453-22ed1be7e268.jpg)
+La société **IC GROUP** dans laquelle vous travaillez en tant qu’ingénieur Devops souhaite mettre sur pied un site web vitrine devant permettre d’accéder à ses 02 applications phares qui sont :  
 
-------------
+1) Odoo et 
+1) pgAdmin 
 
-Firstname : Ehueni Barthelémy
+**Odoo**, un ERP multi usage qui permet de gérer les ventes, les achats, la comptabilité, l’inventaire, le personnel …  
 
-Surname : ANGORA
+Odoo est distribué en version communautaire et Enterprise. ICGROUP souhaite avoir la main sur le code et apporter ses propres modifications et customisations ainsi elle a opté pour l’édition communautaire.  Plusieurs versions de Odoo sont disponibles et celle retenue est la 13.0 car elle intègre un système de LMS (Learning Management System) qui sera utilisé pour publier les formations en internes et ainsi diffuser plus facilement l’information.  
 
-For Eazytraining's 13th DevOps Bootcamp
+Liens utiles : 
 
-Period : march-april-may
+- Site officiel :[ https://www.odoo.com/ ](https://www.odoo.com/) 
+- GitHub officiel:[ https://github.com/odoo/odoo.git ](https://github.com/odoo/odoo.git) 
+- Docker Hub officiel :[ https://hub.docker.com/_/odoo ](https://hub.docker.com/_/odoo) 
 
-Sunday the 5th, may-2024
+**pgAdmin** quant à elle devra être utilisée pour administrer de façon graphique la base de données PostgreSQL crée précédemment. 
 
+- Site officiel :[ https://www.pgadmin.org/ ](https://www.pgadmin.org/) 
+- Docker Hub officiel:[ https://hub.docker.com/r/dpage/pgadmin4/ ](https://hub.docker.com/r/dpage/pgadmin4/) 
 
+Le site web vitrine a été conçu par l’équipe de développeurs de l’entreprise et les fichiers y relatifs se trouvent dans le repo suscité : [ https://github.com/sadofrazer/ic-webapp.git ](https://github.com/sadofrazer/ic-webapp.git) . Il est de votre responsabilité de conteneuriser cette application tout en permettant la saisie des différentes URL des applications (Odoo et pgadmin) par le biais des variables d’environnement. 
 
+Ci-dessous un aperçu du site vitrine attendu. 
 
-## Application
+![](images/site_vitrine.jpeg)
 
-I had to deploy an application named "*student_list*", which is very basic and enables POZOS to show the list of some students with their age.
+**NB :** L’image** créée devra permettre de lancer un container permettant d’héberger ce site web et ayant les liens adéquats permettant d’accéder à nos applications internes 
 
-student_list application has two modules:
 
-- The first module is a REST API (with basic authentication needed) who send the desire list of the student based on JSON file
-- The second module is a web app written in HTML + PHP who enable end-user to get a list of students
+## **2) Conteneurisation de l’application web.** 
 
+Il s’agit en effet d’une application web python utilisant le module Flask. Les étapes à suivre pour la conteneurisation de cette application sont les suivantes : 
 
-## The need
+1) Image de base : `python:3.6-alpine`
+2) Définir le répertoire `/opt` comme répertoire de travail 
+3) Installer le module Flask version 1.1.2 à l’aide de `pip install flask==1.1.2`
+4) Exposer le port `8080` qui est celui utilisé par défaut par l'application
+5) Créer les variables d’environnement `ODOO_URL` et `PGADMIN_URL` afin de permettre la définition de ces url lors du lancement du container 
+6) Lancer l’application `app.py` dans le `ENTRYPOINT` grâce à la commande `python`  
 
-My work was to :
-1) build one container for each module
-2) make them interact with each other on the same network
-3) provide a private registry on the same network
+Une fois le Dockerfile crée, Buildez le et lancer un container test permettant d’aller sur les sites web officiels de chacune de ces applications (site web officiels fournis ci-dessus). 
 
+**Nom de l’image :**  ic-webapp ;*  
+**tag :** 1.0*  
+**container test_name :** test-ic-webapp* 
 
-## My plan
+Une fois le test terminé, supprimez ce container test et poussez votre image sur votre registre Docker hub. 
 
-First, i introduce you the six ***files*** of this project and their role 
+## **3) Partie 1 : Déploiement des différentes applications dans un cluster Kubernetes.** 
 
-Then, I'll show you how I ***built*** and tested the architecture to justify my choices
+### **a. Architecture** 
 
-Third and last part will be about to provide the ***deployment*** process I suggest for this application.
+Les applications ou services seront déployées dans un cluster Minikube, donc à un seul nœud et devront respecter l’architecture suivante. 
 
+![](images/synoptique_Kubernetes.jpeg)
 
-### The files' role
+En vous basant sur cette architecture logicielle, bien vouloir identifier en donnant le type et le rôle de chacune des ressources (A…H)  mentionnées dans cette architecture. 
 
-In my delivery you can find three main files : a ***Dockerfile***, a ***docker-compose.yml*** and a ***docker-compose.registry.yml***
 
-- docker-compose.yml: to launch the application (API and web app)
-- docker-compose.registry.yml: to launch the local registry and its frontend
-- simple_api/student_age.py: contains the source code of the API in python
-- simple_api/Dockerfile: to build the API image with the source code in it
-- simple_api/student_age.json: contains student name with age on JSON format
-- index.php: PHP  page where end-user will be connected to interact with the service to list students with their age.
 
+### **b. Déploiement de l’application Odoo** 
 
-## Build and test
+Comme décrite ci-dessus, Odoo est une application web de type 2 tier contenant différents modules facilitant la gestion administrative d’une société. 
 
-Considering you just have cloned this repository, you have to follow those steps to get the 'student_list' application ready :
+En Vous servant des différents liens mentionnés ci-dessus, déployer Odoo à l’aide des images docker correspondantes et assurez vous que les données de la base de données Odoo soit persistantes et sauvegardées dans un répertoire de votre choix sur votre hôte. **NB**: respectez l’architecture ci-dessus 
 
-1) Change directory and build the api container image :
 
-```bash
-cd ./mini-projet-docker/simple_api
-docker build . -t api-pozos:1
-docker images
-```
-> ![1-docker images](https://user-images.githubusercontent.com/101605739/224588377-b8afa11f-33b6-41ed-9f58-6e23d2054c83.jpg)
 
+### **c. Déploiement PgAdmin** 
 
-2) Create a bridge-type network for the two containers to be able to contact each other by their names thanks to dns functions :
+Comme ci-dessus, servez-vous de la documentation de déploiement de PgAdmin sous forme de container afin de déployer votre application. 
 
-```bash
-docker network create student_list.network --driver=bridge
-docker network ls
-```
-> ![2-docker network ls](https://user-images.githubusercontent.com/101605739/224588523-a842cd26-c5d5-4338-8547-2e31578655c9.jpg)
+Vous devez par la suite découvrir dans la documentation, le répertoire contenant les données et paramètres de l’application PgAdmin afin de le rendre persistant. 
 
+Notez également que PgAdmin est une application web d’administration des bases de données PostgreSQL, Toutefois, le déploiement d’un container PgAdmin ne nécessite pas obligatoirement la fourniture des paramètres de connexion à une BDD, donc vous pouvez initialement déployer l’interface web en fournissant le minimum de paramètres requis (adresse mail + mot de passe) et ce n’est que par la suite par le biais de l’interface graphique que vous initierez les différentes connexion à vos bases de données. 
 
-3) Move back to the root dir of the project and run the backend api container with those arguments :
+Afin de réduire le nombre de taches manuelles, nous souhaiterons qu’au démarrage de votre container PgAdmin, que ce dernier ait automatiquement les données nécessaires lui permettant de se connecter à votre BDD Odoo. Pour ce faire, il existe un fichier de configuration PgAdmin que vous devrez au préalable customiser et fournir par la suite à votre container sous forme de volume. 
 
-```bash
-cd ..
-docker run --rm -d --name=api.student_list --network=student_list.network -v ./simple_api/:/data/ api.student_list.img
-docker ps
-```
-> ![3-docker ps](https://user-images.githubusercontent.com/101605739/224589378-abcc3f7d-d5c6-4a81-ba28-767cb6cd7b7c.jpg)
+Ce fichier doit être situé au niveau du container dans le répertoire : /pgadmin4/servers.json 
 
-As you can see, the api backend container is listening to the 5000 port.
-This internal port can be reached by another container from the same network so I chose not to expose it.
+![](images/server_def.jpeg)
 
-I also had to mount the `./simple_api/` local directory in the `/data/` internal container directory so the api can use the `student_age.json` list 
 
+### **d. Déploiement des différentes applications** 
 
-> ![4-./simple_api/:/data/](https://user-images.githubusercontent.com/101605739/224589839-7a5d47e6-fdff-40e4-a803-99ebc9d70b03.png)
+En vous servant des données ci-dessus, créez les différents manifests correspondants aux ressources nécessaires au bon fonctionnement de l’application tout en respectant l’architecture fournie (Nbre de réplicas et persistance de données). 
 
+Notez également que l’ensemble de ces ressources devront être crées dans un namespace particulier appelé «i*cgroup*» et devront obligatoirement avoir toutes au moins le label « *env = prod* » 
 
-4) Update the `index.php` file :
+**NB** : Etant donné que vos manifests pourront être publics (pousser vers un repo Git ), bien vouloir prendre les mesures nécessaires afin d’utiliser les ressources adéquates permettant de cacher vos informations sensibles. 
 
-You need to update the following line before running the website container to make ***api_ip_or_name*** and ***port*** fit your deployment
-   ` $url = 'http://<api_ip_or_name:port>/pozos/api/v1.0/get_student_ages';`
 
-Thanks to our bridge-type network's dns functions, we can easyly use the api container name with the port we saw just before to adapt our website
+ ### **e. Test de fonctionnement et rapport final** 
 
-```bash
-sed -i s\<api_ip_or_name:port>\api.student_list:5000\g ./website/index.php
-```
-> ![5-api.student_list:5000](https://user-images.githubusercontent.com/101605739/224590958-49c2ce64-c9a0-4655-93da-552f27f78b2f.png)
+Lancez l’exécution de vos différents manifests afin de déployer les différents services ou applications demandés, testez le bon fonctionnement de vos différentes application et n’hésitez pas à prendre des captures d’écran le plus possible afin de consolider votre travail dans un rapport final qui présentera dans les moindre détails ce que vous avez fait. 
 
+## **3) Partie 2 : Mise en place d'un pipeline CI/CD à l'aide de JENKINS et de ANSIBLE.** 
+L'objectif de ICGROUP est en effet de mettre sur pied un pipeline CI/CD permettant l'intégration et le déploiement en continu de cette solution sur leurs différentes machines en environnement de production (03 serveurs hébergés soit en On Premises soit dans le cloud AWS)
 
-5) Run the frontend webapp container :
+### **a. Pipeline Stages** 
+![](images/pipeline.jpeg)
 
-Username and password are provided in the source code `.simple_api/student_age.py`
+### **b. Infrastructure** 
 
-> ![6-id/passwd](https://user-images.githubusercontent.com/101605739/224590363-0fdd56ae-9fb9-45e7-8912-64a6789faa9e.png)
+Pour ce projet, on aura besoin de 03 serveurs hébergées soit dans le cloud ou en On Premises (VirtualBox, VMWare…) pour ceux qui n’ont pas de comptes cloud (AWS, AZURE ou autres).
+Les serveurs nécessaires sont les suivants : docker_jenkins: [ https://github.com/sadofrazer/jenkins-frazer.git ](https://github.com/sadofrazer/jenkins-frazer.git)
 
-```bash
-docker run --rm -d --name=webapp.student_list -p 80:80 --network=student_list.network -v ./website/:/var/www/html -e USERNAME=toto -e PASSWORD=python php:apache
-docker ps
-```
-> ![7-docker ps](https://user-images.githubusercontent.com/101605739/224591443-344fd2cd-ddbc-4780-bbc5-7cc0bdac156f.jpg)
+        1) **Serveur 1** : Jenkins (AWS, t2.medium, docker_jenkins: https://github.com/sadofrazer/jenkins-frazer.git)
+        2) **Serveur 2** : Applications web site vitrine + pgadmin4 (AWS, t2.micro)
+        3) **Serveur 3** : Application Odoo (AWS, t2.micro)
 
 
-6) Test the api through the frontend :
+### **c. Automatisation du déploiement**
 
-6a) Using command line :
+Afin de faciliter le déploiement de nos application dans notre pipeline Jenkins, nous allons créer des rôles ansible à l’aide de l’IAC docker (Docker-compose) et Ansible.
+Les étapes sont les suivantes :
 
-The next command will ask the frontend container to request the backend api and show you the output back.
-The goal is to test both if the api works and if frontend can get the student list from it.
+    1) Créer un docker-compose permettant de déployer entièrement l’application Odoo tout en créant un réseau docker et un volume pour faire persister les données de la BDD
+    2) Créer un docker-compose permettant de déployer l’application pgadmin avec les paramètres décrits dans la partie1 (fichier servers.json et persistance des données).
+    3) A l’aide de ces docker-compose comme Template, créer deux rôles ansible que vous appellerez odoo_role et pgadmin_role, dans ces rôles vous devez :
+        a) Variabiliser le nom du réseau et du volume qui sera créé dans docker
+        b) Variabiliser le répertoire de montage pour le volume, permettant à l’utilisateur de définir s’il le souhaite un autre chemin de fichier en local sur son serveur où il souhaite stocker les données de la BDD Odoo 
+        c) Variabiliser le nom des services et des containers qui seront créés par ce docker-compose.
 
-```bash
-docker exec webapp.student_list curl -u toto:python -X GET http://api.student_list:5000/pozos/api/v1.0/get_student_ages
-```
-> ![8-docker exec](https://user-images.githubusercontent.com/101605739/224593842-23c7f3a5-e5bc-4840-a6af-2eda0f622710.png)
+**NB** : Ces rôles devront être appelés dans votre pipeline lors de la phase de déploiement avec les variabilisations qui vont bien.
 
 
-6b) Using a web browser `IP:80` :
+### **d. Mise en place du pipeline**
 
-- If you're running the app into a remote server or a virtual machine (e.g provisionned by eazytraining's vagrant file), please find your ip address typing `hostname -I`
-> ![9-hostname -I](https://user-images.githubusercontent.com/101605739/224594393-841a5544-7914-4b4f-91fd-90ce23200156.jpg)
+Afin de davantage automatiser notre solution, vous devez créer à la racine de votre repo, un fichier appelé releases.txt dans lequel vous enterrez les données sur votre application ( ODOO_URL, PGADMIN_URL et Version)
+Ce fichier devra contenir 03 lignes et 02 colonnes ( séparateur de colonne étant l’espace)
+Exemple 
+![](images/releases.jpeg)
 
-- If you are working on PlayWithDocker, just `open the 80 port` on the gui
-- If not, type `localhost:80`
+Par la suite, vous devez modifier votre Dockerfile afin qu’il puisse lors du build récupérer les valeurs des URL du fichier releases.txt et les fournir automatiquement aux variables d’environnement crées dans le Dockerfile.
+Cela devra se faire grâce aux commandes awk et export. Ci-dessous un exemple.
+![](images/export_var.jpeg)
+Après avoir crée le Dockerfile qui va bien, Vous devrez créer le JenkinsFile permettant de Builder l’application, la tester (à vous de trouver les différents tests à réaliser sur chacune des applications) et la déployer en environnement de production.
+**NB** : vous devrez utiliser les mêmes mécanismes afin de récupérer la valeur de la variable version dans le fichier releases.txt qui devra être utilisé comme tag sur votre image.
 
-Click the button
 
-> ![10-check webpage](https://user-images.githubusercontent.com/101605739/224594989-0cb5bcb7-d033-4969-a12e-0b2aa9953a97.jpg)
+### **e. Test de fonctionnement et rapport final**
 
+Lancez l’exécution de votre pipeline manuellement pour une première fois, ensuite automatiquement après modification de votre fichier releases.txt (version : 1.1). Vérifiez que toutes les applis sont déployées et fonctionnent correctement. N’hésitez pas à prendre des captures d’écran le plus possible afin de consolider votre travail dans un rapport final qui présentera dans les moindre détails ce que vous avez fait.
 
-7) Clean the workspace :
 
-Thanks to the `--rm` argument we used while starting our containers, they will be removed as they stop.
-Remove the network previously created.
 
+ ## **4) ANNEXE** 
 
-```bash
-docker stop api.student_list
-docker stop webapp.student_list
-docker network rm student_list.network
-docker network ls
-docker ps
-```
-> ![11-clean-up](https://user-images.githubusercontent.com/101605739/224595124-3ea15f42-e6d5-462a-92a0-52af7c73c17a.jpg)
+Ci-dessous un exemple de description des qualifications souhaitées pour un poste de Devops 
 
+![](images/offre_emploi.jpeg)
 
+**NB** : Bien vouloir preter attention aux qualités encadrées en jaune ci-dessus, vous vous rendez compte en effet que maitriser les technologies seulement ne suffit pas, il faut en plus de ca avoir un esprit très créatif, de très bonnes capacités redactionnelles pour rediger vos différents rapports et également des qualités de pédagogue qui vous aideront à parfaire les explications de vos actions dans vos différents rapports afin de faciliter leur compréhension. 
 
+Compte tenu de tout cela, je vous invite tous à donner l’impotance à ce volet « rapport » de votre projet final, car c’est également une partie très importante qui devra pouvoir décrire le contenu de l’ensemble de votre travail.  
 
-## Deployment
-
-As the tests passed we can now 'composerize' our infrastructure by putting the `docker run` parameters in ***infrastructure as code*** format into a `docker-compose.yml` file.
-
-1) Run the application (api + webapp) :
-
-As we've already created the application image, now you just have to run :
-
-```bash
-docker-compose up -d
-```
-
-Docker-compose permits to chose which container must start first.
-The api container will be first as I specified that the webapp `depends_on:` it.
-> ![12-depends on](https://user-images.githubusercontent.com/101605739/224595564-e010cc3f-700b-4b3e-9251-904dafbe4067.png)
-
-And the application works :
-> ![13-check app](https://github.com/Abdel-had/mini-projet-docker/assets/101605739/2002c41f-6590-4491-b571-65de7ba1457e)
-
-
-2) Create a registry and its frontend
-
-I used `registry:2` image for the registry, and `joxit/docker-registry-ui:static` for its frontend gui and passed some environment variables :
-
-> ![14-gui registry env var](https://user-images.githubusercontent.com/101605739/224596117-76cda01c-f2f6-4a18-862f-95d56449f98a.png)
-
-
-E.g we'll be able to delete images from the registry via the gui.
-
-```bash
-docker-compose -f docker-compose.registry.yml up -d
-```
-> ![15-check gui reg](https://github.com/Abdel-had/mini-projet-docker/assets/101605739/99f182f1-bc73-458c-8b29-207a681a31fd)
-
-
-3) Push an image on the registry and test the gui
-
-You have to rename it before (`:latest` is optional) :
-
-> NB: for this exercise, I have left the credentials in the **.yml** file.
-
-```bash
-docker login
-docker image tag api.student_list.img:latest localhost:5000/pozos/api.student_list.img:latest
-docker images
-docker image push localhost:5000/pozos/api.student_list.img:latest
-```
-
-> ![16-push image to registry](https://github.com/Abdel-had/mini-projet-docker/assets/101605739/4dbff256-72ae-4c6e-b076-65e705828f28)
-
-> ![17-full reg](https://github.com/Abdel-had/mini-projet-docker/assets/101605739/fbc9cd2b-ec4b-4211-ba26-1a454936b204)
-
-> ![18-full reg details](https://github.com/Abdel-had/mini-projet-docker/assets/101605739/3c89e9cc-f1f4-42f8-bea4-4e3ec1672cbe)
-
-
-------------
-
-
-# This concludes my Docker mini-project run report.
-
-Throughout this project, I had the opportunity to create a custom Docker image, configure networks and volumes, and deploy applications using docker-compose. Overall, this project has been a rewarding experience that has allowed me to strengthen my technical skills and gain a better understanding of microservices principles. I am now better equipped to tackle similar projects in the future and contribute to improving containerization and deployment processes within my team and organization.
-
-![octocat](https://myoctocat.com/assets/images/base-octocat.svg) 
+Merci de le rédiger correctement avec les captures d’écran, commentaires et explications qui vont bien car cette partie sera prise en compte dans votre note finale.
