@@ -1,0 +1,12 @@
+FROM python:3.6-alpine
+LABEL maintainer="Barthelemy Ehueni ANGORA"
+WORKDIR /opt/
+RUN pip install flask
+ADD . /opt/
+VOLUMe /opt
+EXPOSE 8080
+ENV ODOO_URL="https://www.odoo.com"
+ENV PGADMIN_URL="https://www.pgadmin.org"
+ENTRYPOINT ["python"]
+CMD [ "app.py" ]
+

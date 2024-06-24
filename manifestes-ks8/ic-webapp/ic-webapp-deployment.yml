@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    env: prod
+    app: ics-webapp
+  name: ics-webapp
+  namespace: ics-webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ics-webapp
+  template:
+    metadata:
+      labels:
+        app: ics-webapp
+    spec:
+      containers:
+      - image: ehueni1989/ics-webapp:v1.0
+        name: ics-webapp
+        env:
+        - name: ODOO_URL
+          value: http://192.168.56.38:30069
+        - name: PGADMIN_URL
+          value: http://192.168.56.38:30050
+        ports:
+        - containerPort: 8080
+          name: ics-webapp
+
